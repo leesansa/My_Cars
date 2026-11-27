@@ -1,0 +1,30 @@
+# PR 과 작업 브랜치 push 마다 검사(lint · 타입 · 테스트 · 빌드). 배포는 하지 않음 (배포는 Vercel Git 연동이 맡음)
+# 비밀값이 필요 없음: 테스트 DB 는 PGlite(메모리), 빌드는 DB 에 접속하지 않음. main 브랜치 보호에서 이 검사(check)를 필수로 건다
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches-ignore: [main]
+    paths-ignore:
+      - '**.md'
+
+# 같은 브랜치에 연달아 push 하면 앞의 검사는 취소 (마지막 것만 의미 있음)
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
