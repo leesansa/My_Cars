@@ -1,0 +1,16 @@
+# 배포 후 스모크: Vercel 이 운영 배포를 마치면 GitHub 에 deployment_status 이벤트를 보낸다 → 운영 주소의 / 와 /api/health 가 200 인지 확인
+# 실패하면 Vercel 대시보드의 Instant Rollback 으로 직전 배포로 되돌린다 (수동, 설계 13.2). DB 는 되돌아가지 않으므로 마이그레이션은 추가형만
+name: Smoke
+
+on: deployment_status
+
+jobs:
+  smoke:
+    if: github.event.deployment_status.state == 'success' && github.event.deployment.environment == 'Production'
+    runs-on: ubuntu-latest
+    env:
+      # environment_url(배포별 주소)은 Standard Protection 으로 로그인이 필요해서, 공개된 운영 도메인을 검사한다
+      URL: https://mycar-note.vercel.app
+    steps:
+      - run: curl -fsS --retry 3 --retry-delay 5 "$URL/" -o /dev/null
+      - run: curl -fsS --retry 3 --retry-delay 5 "$URL/api/health"
