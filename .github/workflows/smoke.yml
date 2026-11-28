@@ -10,7 +10,22 @@ jobs:
     runs-on: ubuntu-latest
     env:
       # environment_url(배포별 주소)은 Standard Protection 으로 로그인이 필요해서, 공개된 운영 도메인을 검사한다
-      URL: https://mycar-note.vercel.app
+      # 도메인을 바꾸면 저장소 변수 PROD_URL(Settings > Secrets and variables > Actions > Variables)만 고친다
+      URL: ${{ vars.PROD_URL || 'https://mycar-note.vercel.app' }}
+      COMMIT: ${{ github.event.deployment.sha }}
     steps:
+      # 운영 도메인이 아직 이전 배포를 가리키면 그 배포가 200 을 돌려줘 깨진 새 배포를 놓친다
+      # → /api/health 의 commit 이 이번 배포 커밋과 같아질 때까지 기다린 뒤 검사한다 (최대 약 5분)
+      - name: 운영 도메인이 이번 배포를 가리킬 때까지 대기
+        run: |
+          want="${COMMIT:0:7}"
+          for i in $(seq 1 30); do
+            got=$(curl -fsS "$URL/api/health" | jq -r '.commit // empty' || true)
+            echo "시도 $i: 운영 commit=${got:-?} / 기대 $want"
+            [ "$got" = "$want" ] && exit 0
+            sleep 10
+          done
+          echo "::error::운영 도메인이 5분 안에 $want 배포로 바뀌지 않았습니다"
+          exit 1
       - run: curl -fsS --retry 3 --retry-delay 5 "$URL/" -o /dev/null
       - run: curl -fsS --retry 3 --retry-delay 5 "$URL/api/health"
