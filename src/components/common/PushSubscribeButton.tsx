@@ -53,10 +53,28 @@ export function PushSubscribeButton({ vapidPublicKey }: { vapidPublicKey: string
 
   async function sendTest() {
     setMessage('보내는 중…')
-    const res = await fetch('/api/push/test', { method: 'POST' })
+    let res: Response
+    try {
+      res = await fetch('/api/push/test', { method: 'POST' })
+    } catch {
+      setMessage('네트워크 연결을 확인한 뒤 다시 눌러 주세요')
+      return
+    }
+    if (res.status === 401) {
+      setMessage('로그인이 끝났어요. 다시 로그인한 뒤 눌러 주세요')
+      return
+    }
+    if (!res.ok) {
+      setMessage(`테스트 알림을 보내지 못했어요 (${res.status}). 잠시 뒤 다시 눌러 주세요`)
+      return
+    }
     const body = (await res.json().catch(() => null)) as { sent?: number; removed?: number } | null
-    setMessage(res.ok && body?.sent ? `테스트 알림을 보냈어요 (${body.sent}대)` : '보낼 수 있는 기기가 없어요. 알림 받기를 다시 눌러 주세요')
-    if (res.ok && !body?.sent) setState('idle')
+    if (body?.sent) {
+      setMessage(`테스트 알림을 보냈어요 (${body.sent}대)`)
+      return
+    }
+    setMessage('보낼 수 있는 기기가 없어요. 알림 받기를 다시 눌러 주세요')
+    setState('idle')
   }
 
   if (state === 'checking') return null

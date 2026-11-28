@@ -36,6 +36,8 @@
 
 결정 지점(첫 요청 2초 초과 → 리전 재확인 · 로딩 화면): **2초 아래(1.90s)라 대체안 없이 간다.** 다만 기준에 가까우므로 설계 16장대로 랜딩은 DB 없이 두고, 대시보드에는 로딩 화면을 계획 3 에서 넣는다.
 
+> 0주차 리뷰 뒤(2026-11-28): 아무나 불러 Neon 을 계속 깨우지 못하게 `?db=1` 은 이제 `Authorization: Bearer <CRON_SECRET>` 이 있어야 한다. 다시 잴 때는 `curl -H "Authorization: Bearer $CRON_SECRET" ".../api/health?db=1"`.
+
 ## 주의할 점 (Vercel 에서 알게 된 것)
 
 1. **프로젝트 이름은 소문자만.** `MyCars` 거부 → `mycar-note`. create-next-app 도 폴더 이름(`My_Cars`)의 대문자를 거부해서 임시 폴더에서 만들어 옮김.

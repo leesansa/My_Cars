@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-// Auth.js 설정(D1 · OAuth)을 불러오지 않도록 auth() 만 가짜로 바꾼다
+// Auth.js 설정(Neon · OAuth)을 불러오지 않도록 auth() 만 가짜로 바꾼다
 const auth = vi.fn()
 vi.mock('./config', () => ({ auth: () => auth() }))
 
